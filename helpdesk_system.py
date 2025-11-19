@@ -83,7 +83,9 @@ def initialize_users():
     """Initialize default users if not exists"""
     default_users = [
         {"username": "admin", "password": "admin123", "role": "admin"},
-        {"username": "user", "password": "user123", "role": "user"}
+        {"username": "tech", "password": "tech123", "role": "admin"},
+        {"username": "user1", "password": "user123", "role": "user"},
+        {"username": "user2", "password": "user123", "role": "user"}
     ]
     
     if not os.path.exists(USERS_FILE):
@@ -146,6 +148,63 @@ def authenticate_user() -> Optional[Dict]:
     
     print("❌ Invalid username or password!")
     return None
+
+def register_user():
+    """Register new user (admin only)"""
+    if CURRENT_USER["role"] != "admin":
+        print("❌ Only administrators can register new users!")
+        return
+    
+    print("\n👤 REGISTER NEW USER")
+    username = input("Username: ").strip()
+    password = getpass.getpass("Password: ").strip()
+    role = input("Role (admin/user): ").strip().lower()
+    
+    if role not in ["admin", "user"]:
+        print("❌ Role must be 'admin' or 'user'!")
+        return
+    
+    users = load_users()
+    
+    # Check if username exists
+    if any(user["username"] == username for user in users):
+        print("❌ Username already exists!")
+        return
+    
+    # Add new user
+    new_user = {
+        "username": username,
+        "password": password,
+        "role": role
+    }
+    users.append(new_user)
+    save_users(users)
+    
+    print(f"✅ User {username} registered successfully as {role}!")
+
+def delete_user():
+    """Delete user (admin only)"""
+    if CURRENT_USER["role"] != "admin":
+        print("❌ Only administrators can delete users!")
+        return
+    
+    print("\n🗑️ DELETE USER")
+    username = input("Username to delete: ").strip()
+    
+    if username == CURRENT_USER["username"]:
+        print("❌ You cannot delete your own account!")
+        return
+    
+    users = load_users()
+    
+    for user in users:
+        if user["username"] == username:
+            users.remove(user)
+            save_users(users)
+            print(f"✅ User {username} deleted successfully!")
+            return
+    
+    print("❌ User not found!")
 
 # ==================== CORE TICKET OPERATIONS ====================
 def create_ticket(title: str, description: str, priority: str, reporter: str) -> str:
@@ -306,6 +365,32 @@ def sort_tickets_flow(tickets: List[Dict] = None) -> List[Dict]:
     display_tickets_summary(sorted_tickets, "sorted tickets")
     return sorted_tickets
 
+# ==================== USER MANAGEMENT FLOW ====================
+def manage_users_flow():
+    """Admin-only user management"""
+    print("\n👤 USER MANAGEMENT")
+    print("1. Register New User")
+    print("2. List All Users")
+    print("3. Delete User")
+    print("4. Back to Main Menu")
+    
+    choice = input("Enter choice (1-4): ").strip()
+    
+    if choice == "1":
+        register_user()
+    elif choice == "2":
+        users = load_users()
+        print(f"\n📋 REGISTERED USERS ({len(users)}):")
+        for user in users:
+            role_icon = "👑" if user["role"] == "admin" else "👤"
+            print(f"{role_icon} {user['username']} ({user['role']})")
+    elif choice == "3":
+        delete_user()
+    elif choice == "4":
+        return
+    else:
+        print("❌ Invalid choice!")
+
 # ==================== MENU FLOWS ====================
 def create_ticket_flow():
     """Flow for creating new ticket"""
@@ -446,9 +531,10 @@ def show_admin_menu():
         print("5. 🔍 Search Tickets")
         print("6. 📊 Sort Tickets")
         print("7. 📈 Reports")
-        print("8. 🔐 Logout")
+        print("8. 👤 Manage Users")
+        print("9. 🔐 Logout")
         
-        choice = input("\nEnter choice (1-8): ").strip()
+        choice = input("\nEnter choice (1-9): ").strip()
         
         if choice == "1":
             create_ticket_flow()
@@ -465,6 +551,8 @@ def show_admin_menu():
         elif choice == "7":
             generate_reports_flow()
         elif choice == "8":
+            manage_users_flow()
+        elif choice == "9":
             print("🔐 Logging out...")
             break
         else:
@@ -511,7 +599,7 @@ def main():
     global CURRENT_USER
     
     print("🚀 SIMPLE HELP DESK SYSTEM")
-    print("With Search & Sort Features")
+    print("With Search, Sort & User Management")
     
     # Initialize default users
     initialize_users()
