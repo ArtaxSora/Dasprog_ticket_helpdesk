@@ -1,0 +1,22 @@
+[
+  {
+    "id": "TKT-001",
+    "title": "Listrik Mati",
+    "description": "Listrik mati dilap k70",
+    "priority": "medium",
+    "reporter": "admin",
+    "status": "in_progress",
+    "created_date": "2025-11-19T16:05:40.251291",
+    "comments": []
+  },
+  {
+    "id": "TKT-002",
+    "title": "listrik konslet",
+    "description": "Konslet gedung ca",
+    "priority": "medium",
+    "reporter": "admin",
+    "status": "new",
+    "created_date": "2025-11-19T16:06:43.263310",
+    "comments": []
+  }
+]
