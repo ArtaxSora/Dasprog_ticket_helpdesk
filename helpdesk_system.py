@@ -199,9 +199,14 @@ def delete_user():
     
     for user in users:
         if user["username"] == username:
-            users.remove(user)
-            save_users(users)
-            print(f"✅ User {username} deleted successfully!")
+            # Konfirmasi penghapusan
+            confirm = input(f"Are you sure you want to delete user '{username}'? (y/n): ").strip().lower()
+            if confirm == 'y':
+                users.remove(user)
+                save_users(users)
+                print(f"✅ User {username} deleted successfully!")
+            else:
+                print("❌ User deletion cancelled.")
             return
     
     print("❌ User not found!")
@@ -265,6 +270,27 @@ def add_comment(ticket_id: str, username: str, message: str) -> str:
             return f"Comment added to ticket {ticket_id}"
     
     return f"Error: Ticket {ticket_id} not found"
+
+def delete_ticket(ticket_id: str) -> str:
+    """Delete ticket (admin can delete any, user can only delete their own)"""
+    tickets = load_tickets()
+    
+    for ticket in tickets:
+        if ticket["id"] == ticket_id:
+            # Check permissions
+            if CURRENT_USER["role"] != "admin" and ticket["reporter"] != CURRENT_USER["username"]:
+                return "❌ You can only delete your own tickets!"
+            
+            # Konfirmasi penghapusan
+            confirm = input(f"Are you sure you want to delete ticket '{ticket_id}'? (y/n): ").strip().lower()
+            if confirm != 'y':
+                return "❌ Ticket deletion cancelled."
+            
+            tickets.remove(ticket)
+            save_tickets(tickets)
+            return f"✅ Ticket {ticket_id} deleted successfully!"
+    
+    return f"❌ Ticket {ticket_id} not found"
 
 # ==================== DISPLAY FUNCTIONS ====================
 def display_ticket(ticket: Dict) -> None:
@@ -391,6 +417,44 @@ def manage_users_flow():
     else:
         print("❌ Invalid choice!")
 
+# ==================== DELETE TICKET FLOWS ====================
+def delete_ticket_flow():
+    """Flow untuk menghapus tiket"""
+    print("\n🗑️ DELETE TICKET")
+    ticket_id = input("Enter ticket ID to delete: ").strip()
+    
+    result = delete_ticket(ticket_id)
+    print(f" {result}")
+
+def delete_my_ticket_flow():
+    """Flow untuk user menghapus tiket mereka sendiri"""
+    print("\n🗑️ DELETE MY TICKET")
+    
+    # Tampilkan tiket user terlebih dahulu
+    tickets = load_tickets()
+    my_tickets = [t for t in tickets if t["reporter"] == CURRENT_USER["username"]]
+    
+    if not my_tickets:
+        print("❌ You don't have any tickets to delete.")
+        return
+    
+    display_tickets_summary(my_tickets, "my tickets")
+    
+    ticket_id = input("\nEnter ticket ID to delete: ").strip()
+    
+    # Verifikasi bahwa tiket memang milik user
+    ticket = get_ticket(ticket_id)
+    if not ticket:
+        print("❌ Ticket not found!")
+        return
+        
+    if ticket["reporter"] != CURRENT_USER["username"]:
+        print("❌ You can only delete your own tickets!")
+        return
+    
+    result = delete_ticket(ticket_id)
+    print(f" {result}")
+
 # ==================== MENU FLOWS ====================
 def create_ticket_flow():
     """Flow for creating new ticket"""
@@ -421,8 +485,9 @@ def view_my_tickets_flow():
     print("\n1. View Ticket Details")
     print("2. Search in My Tickets")
     print("3. Sort My Tickets")
+    print("4. Delete My Ticket")
     
-    choice = input("Choose option (1-3): ").strip()
+    choice = input("Choose option (1-4): ").strip()
     
     if choice == "1":
         ticket_id = input("Enter ticket ID: ").strip()
@@ -435,6 +500,8 @@ def view_my_tickets_flow():
         search_tickets_flow()
     elif choice == "3":
         sort_tickets_flow(my_tickets)
+    elif choice == "4":
+        delete_my_ticket_flow()
 
 def view_all_tickets_flow():
     """Flow for admin to view all tickets"""
@@ -450,8 +517,9 @@ def view_all_tickets_flow():
     print("\n1. View Ticket Details")
     print("2. Search Tickets")
     print("3. Sort Tickets")
+    print("4. Delete Ticket")
     
-    choice = input("Choose option (1-3): ").strip()
+    choice = input("Choose option (1-4): ").strip()
     
     if choice == "1":
         ticket_id = input("Enter ticket ID: ").strip()
@@ -464,6 +532,8 @@ def view_all_tickets_flow():
         search_tickets_flow()
     elif choice == "3":
         sort_tickets_flow(tickets)
+    elif choice == "4":
+        delete_ticket_flow()
 
 def add_comment_flow():
     """Flow for adding comments to tickets"""
@@ -530,11 +600,12 @@ def show_admin_menu():
         print("4. 💬 Add Comment")
         print("5. 🔍 Search Tickets")
         print("6. 📊 Sort Tickets")
-        print("7. 📈 Reports")
-        print("8. 👤 Manage Users")
-        print("9. 🔐 Logout")
+        print("7. 🗑️ Delete Ticket")
+        print("8. 📈 Reports")
+        print("9. 👤 Manage Users")
+        print("10. 🔐 Logout")
         
-        choice = input("\nEnter choice (1-9): ").strip()
+        choice = input("\nEnter choice (1-10): ").strip()
         
         if choice == "1":
             create_ticket_flow()
@@ -549,10 +620,12 @@ def show_admin_menu():
         elif choice == "6":
             sort_tickets_flow()
         elif choice == "7":
-            generate_reports_flow()
+            delete_ticket_flow()
         elif choice == "8":
-            manage_users_flow()
+            generate_reports_flow()
         elif choice == "9":
+            manage_users_flow()
+        elif choice == "10":
             print("🔐 Logging out...")
             break
         else:
@@ -569,9 +642,10 @@ def show_user_menu():
         print("4. 💬 Comment on My Ticket")
         print("5. 🔍 Search My Tickets")
         print("6. 📊 Sort My Tickets")
-        print("7. 🔐 Logout")
+        print("7. 🗑️ Delete My Ticket")
+        print("8. 🔐 Logout")
         
-        choice = input("\nEnter choice (1-7): ").strip()
+        choice = input("\nEnter choice (1-8): ").strip()
         
         if choice == "1":
             create_ticket_flow()
@@ -588,6 +662,8 @@ def show_user_menu():
             my_tickets = [t for t in load_tickets() if t["reporter"] == CURRENT_USER["username"]]
             sort_tickets_flow(my_tickets)
         elif choice == "7":
+            delete_my_ticket_flow()
+        elif choice == "8":
             print("🔐 Logging out...")
             break
         else:
@@ -599,7 +675,7 @@ def main():
     global CURRENT_USER
     
     print("🚀 SIMPLE HELP DESK SYSTEM")
-    print("With Search, Sort & User Management")
+    print("With Search, Sort, Delete & User Management")
     
     # Initialize default users
     initialize_users()

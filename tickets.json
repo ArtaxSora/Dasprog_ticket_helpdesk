@@ -18,21 +18,5 @@
     "status": "new",
     "created_date": "2025-11-19T16:06:43.263310",
     "comments": []
-  },
-  {
-    "id": "TKT-003",
-    "title": "Nazmi Pengocok",
-    "description": "Bisa 3 kali sehari",
-    "priority": "low",
-    "reporter": "admin",
-    "status": "resolved",
-    "created_date": "2025-11-19T16:20:36.102855",
-    "comments": [
-      {
-        "user": "admin",
-        "message": "Suruh Tobat",
-        "timestamp": "2025-11-19T16:22:55.500335"
-      }
-    ]
   }
 ]
